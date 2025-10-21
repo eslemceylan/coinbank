@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Transfer DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            text-align: center;
+            padding: 30px;
+        }
+        input {
+            padding: 10px;
+            margin: 6px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 300px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        button:hover { background: #45a049; }
+        #output { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h1>💰 Coin Transfer DApp</h1>
+
+<button id="connectBtn">Connect Wallet</button>
+
+<h3>Check Balance</h3>
+<input type="text" id="balanceAddress" placeholder="Enter address" />
+<button id="getBalanceBtn">Get Balance</button>
+
+<h3>Send Coin</h3>
+<input type="text" id="receiver" placeholder="Receiver address" />
+<input type="number" id="amount" placeholder="Amount" />
+<button id="sendBtn">Send</button>
+
+<div id="output"></div>
+
+<script>
+    let web3;
+    let contract;
+    const contractAddress = "0x28bF1188fe3e00C43683C0D8d6510878D69fbECb";
+    const abi =
+        [
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_to",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "sendCoin",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": true,
+                        "internalType": "address",
+                        "name": "sender",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": true,
+                        "internalType": "address",
+                        "name": "receiver",
+                        "type": "address"
+                    },
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "TransferDone",
+                "type": "event"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_user",
+                        "type": "address"
+                    }
+                ],
+                "name": "getBalance",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+    async function connect() {
+        if (window.ethereum) {
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            web3 = new Web3(window.ethereum);
+            contract = new web3.eth.Contract(abi, contractAddress);
+            document.getElementById("output").innerText = "✅ Wallet connected!";
+        } else {
+            alert("Metamask not detected!");
+        }
+    }
+
+    async function getBalance() {
+        const addr = document.getElementById("balanceAddress").value;
+        if (!addr) return alert("Enter an address!");
+        const bal = await contract.methods.getBalance(addr).call();
+        document.getElementById("output").innerText = `💸 Balance: ${bal}`;
+    }
+
+    async function sendCoin() {
+        const to = document.getElementById("receiver").value;
+        const amount = document.getElementById("amount").value;
+        const accounts = await web3.eth.getAccounts();
+        await contract.methods.sendCoin(to, amount).send({ from: accounts[0] });
+        document.getElementById("output").innerText = `✅ Sent ${amount} coin(s) to ${to}`;
+    }
+
+    document.getElementById("connectBtn").onclick = connect;
+    document.getElementById("getBalanceBtn").onclick = getBalance;
+    document.getElementById("sendBtn").onclick = sendCoin;
+</script>
+
+</body>
+</html>
